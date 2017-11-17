@@ -7,15 +7,18 @@ else:
     print("Usage:",sys.argv[0],"[directory]")
 
 if not directory.endswith("/"):
-    directory.join("/")
-for fits_file in os.listdir(dir_path):
+    directory += "/"
+for fits_file in os.listdir(directory):
     if fits_file.endswith(".fits"):
-        print(fits_file)
-        table = import_lightcurve(dir_path+fits_file)
-        t,flux = clean_data(table)
-        flux = normalise_flux(flux)
-        flux = fourier_filter(flux,8)
-        T = test_statistic_array(flux,60)
-        params = double_gaussian_curve_fit(T)
-        print(interpret(params))
+        try:
+            table = import_lightcurve(directory+fits_file)
+            t,flux = clean_data(table)
+            flux = normalise_flux(flux)
+            flux = fourier_filter(flux,8)
+            T = test_statistic_array(flux,60)
+            params = double_gaussian_curve_fit(T)
+            ratio,separation = interpret(params)
+            print(fits_file,ratio,separation,T.min())
+        except Exception as e:
+            pass
 

@@ -174,8 +174,3 @@ def interpret(params):
 
 
 
-#test_file = "light_curves/kplr003542116-2012088054726_llc.fits"
-#t,x = clean_data(import_lightcurve(test_file))
-#x = normalise_flux(x)
-#T = test_statistic_array(x,60)
-
