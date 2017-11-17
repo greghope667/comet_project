@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from analysis_tools_cython import *
 import os,sys
 
