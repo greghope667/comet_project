@@ -17,7 +17,7 @@ args = parser.parse_args()
 
 paths = []
 for path in args.path:
-    paths.append( os.path.join(os.path.expanduser(path),'') )
+    paths.append( os.path.expanduser(path) )
 
 
 for path in paths:
@@ -29,7 +29,8 @@ for path in paths:
         if not fits_file.endswith(".fits"):
             continue
         try:
-            table = import_lightcurve(path+fits_file)
+            f = os.path.join(path,fits_file)
+            table = import_lightcurve(f)
             t,flux = clean_data(table)
             flux = normalise_flux(flux)
             flux = fourier_filter(flux,8)
