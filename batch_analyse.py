@@ -3,23 +3,33 @@ from analysis_tools_cython import *
 import os
 import sys
 import traceback
+import argparse
 
-if len(sys.argv) > 0:
-    directory = sys.argv[1]
-else:
-    print("Usage:",sys.argv[0],"[directory]",file=sys.stderr)
 
-if not os.path.isdir(directory):
-    print("Directory not found.",file=sys.stderr)
-    sys.exit()
+parser = argparse.ArgumentParser(description='Analyse lightcurves in target directory.')
+parser.add_argument('-d', help='target directory(s)',
+                        default='.',nargs='+',dest='path')
 
-if not directory.endswith("/"):
-    directory += "/"
+# Still writing to stdout, no inbuilt logging yet.
+#parser.add_argument('-o',default='output.txt',dest='of',help='output file')
 
-for fits_file in os.listdir(directory):
-    if fits_file.endswith(".fits"):
+args = parser.parse_args()
+
+paths = []
+for path in args.path:
+    paths.append( os.path.join(os.path.expanduser(path),'') )
+
+
+for path in paths:
+    if not os.path.isdir(path):
+        print(path,'not a directory, skipping.',file=sys.stderr)
+        continue
+
+    for fits_file in os.listdir(path):
+        if not fits_file.endswith(".fits"):
+            continue
         try:
-            table = import_lightcurve(directory+fits_file)
+            table = import_lightcurve(path+fits_file)
             t,flux = clean_data(table)
             flux = normalise_flux(flux)
             flux = fourier_filter(flux,8)
@@ -32,5 +42,5 @@ for fits_file in os.listdir(directory):
         except Exception as e:
             print(fits_file,file=sys.stderr)
             traceback.print_exc()
-            print("/n",file=sys.stderr)
+            print("\n",file=sys.stderr)
 
