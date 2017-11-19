@@ -80,7 +80,8 @@ def fourier_filter(flux,freq_count):
     # Find frequencies with largest amplitudes.
     freq_index = np.argsort(-A_mag)[0:freq_count]
 
-    B = np.zeros(len(A))
+    # Mult by 1j so numpy knows we are using complex numbers
+    B = np.zeros(len(A)) * 1j
     for i in freq_index:
         B[i] = A[i]
 
