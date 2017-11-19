@@ -4,8 +4,6 @@ from scipy.optimize import curve_fit
 import numpy as np
 cimport numpy as np
 import math
-##import matplotlib.pyplot as plt
-
 
 
 def import_lightcurve(file_path):
@@ -25,7 +23,7 @@ def import_lightcurve(file_path):
     nan_rows = [ i for i in range(len(table)) if math.isnan(table[i][1]) or math.isnan(table[i][0]) ]
 
     table.remove_rows(nan_rows)
-    
+
     return table
 
 
@@ -39,7 +37,7 @@ def calculate_timestep(table):
 
 
 def clean_data(table):
-    """Interpolates missing data points, so we have equal time gaps 
+    """Interpolates missing data points, so we have equal time gaps
     between points. Returns two numpy arrays, time, flux"""
 
     t = []
@@ -66,7 +64,7 @@ def clean_data(table):
 
 
 def normalise_flux(flux):
-    """Requires flux to be a numpy array. 
+    """Requires flux to be a numpy array.
     Normalisation is x --> (x/mean(x)) - 1"""
 
     return flux/flux.mean() - np.ones(len(flux))
@@ -85,7 +83,7 @@ def fourier_filter(flux,freq_count):
     B = np.zeros(len(A))
     for i in freq_index:
         B[i] = A[i]
-    
+
     # Fitted flux is our periodic approximation to the flux
     fitted_flux = np.fft.irfft(B,len(flux))
 
@@ -102,7 +100,7 @@ def test_statistic_array(np.ndarray[np.float64_t,ndim=1]  flux, int max_half_wid
 
     cdef np.ndarray[dtype=np.float64_t,ndim=2] t_test = np.zeros([n,N])
 #    cdef np.ndarray[dtype=np.float64_t,ndim=1] flux_points = np.zeros(2*n)
-    for m in range(1,n): 
+    for m in range(1,n):
 
         norm_factor = 1 / ((2*m)**0.5 * sigma)
 
@@ -124,6 +122,19 @@ def gauss(x,A,mu,sigma):
 def bimodal(x,A1,mu1,sigma1,A2,mu2,sigma2):
     return gauss(x,A1,mu1,sigma1)+gauss(x,A2,mu2,sigma2)
 
+
+def single_gaussian_curve_fit(x,y):
+    # Initial parameters guess
+    i = np.argmax(y)
+    A0 = y[i]
+    mu0 = x[i]
+    sigma0 = 1
+
+    params_bounds = [[0,x[0],0], [np.inf,x[-1],np.inf]]
+    params,cov = curve_fit(gauss,x,y,[A0,mu0,sigma0],bounds=params_bounds)
+    return params
+
+
 def double_gaussian_curve_fit(T):
     """Fit two normal distributions to a test statistic vector T.
     Returns (A1,mu1,sigma1,A2,mu2,sigma2)"""
@@ -139,21 +150,16 @@ def double_gaussian_curve_fit(T):
     y,bins = np.histogram(data,bins)
     x = (bins[1:] + bins[:-1])/2
 
-    # Initial guess at parameters
-    A1 = N/2
-    A2 = N/2
 
-    mu1 = (2*T_min + T_max)/3
-    mu2 = (T_min + 2*T_max)/3
+    # We fit the two gaussians one by one, as this is more
+    #  sensitive to small outlying bumps.
+    params1 = single_gaussian_curve_fit(x,y)
+    y1_fit = np.maximum(gauss(x,*params1),1)
 
-    sigma1 = 1
-    sigma2 = 1
+    y2 = y/y1_fit
+    params2 = single_gaussian_curve_fit(x,y2)
 
-    start_params = (A1,mu1,sigma1,A2,mu2,sigma2)
-    params,cov=curve_fit(bimodal,x,y,start_params)
-    
-    for i in [0,2,3,5]:
-        params[i] = abs(params[i])
+    params = [*params1,*params2]
 
     return params
 
@@ -166,11 +172,7 @@ def interpret(params):
         A2,mu2,sigma2,A1,mu1,sigma1 = params
 
     height_ratio = A2/A1
-    separation = (mu1 - mu2)/sigma1
+    separation = (mu2 - mu1)/sigma1
 
     return height_ratio,separation
-
-    
-
-
 
