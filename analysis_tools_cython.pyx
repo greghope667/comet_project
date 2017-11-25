@@ -136,11 +136,16 @@ def single_gaussian_curve_fit(x,y):
     return params
 
 
+def nonzero(T):
+    """Returns a 1d array of the nonzero elements of the array T"""
+    return np.array([i for i in T.flat if i != 0])
+
+
 def double_gaussian_curve_fit(T):
     """Fit two normal distributions to a test statistic vector T.
     Returns (A1,mu1,sigma1,A2,mu2,sigma2)"""
 
-    data = np.array([i for i in T.flat if i != 0.0])
+    data = nonzero(T)
     N = len(data)
 
     T_min = data.min()

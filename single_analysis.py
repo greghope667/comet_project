@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from analysis_tools_cython import *
+from scipy.stats import skew
 import sys
 import os
 import matplotlib.pyplot as plt
@@ -24,7 +25,8 @@ A_mag = np.abs(np.fft.rfft(flux))
 periodicnoise = flux-filteredflux
 sigma = flux.std()
 
-T = test_statistic_array(filteredflux,50)
+T = test_statistic_array(filteredflux,60)
+data = nonzero(T)
 
 # Find minimum test statistic value, and its location.
 minT_pos = np.unravel_index(T.argmin(),T.shape)
@@ -35,7 +37,8 @@ print("Maximum transit chance:")
 print("   Time =",round(minT_time,2),"days.")
 print("   Duration =",round(minT_duration,2),"days.")
 print("   T =",round(minT,1))
-print("Transit depth =",1+flux[minT_pos[1]])
+print("Skew =",round(skew(data),2))
+print("Transit depth =",round(1+flux[minT_pos[1]],6))
 
 
 fig1,axarr = plt.subplots(4)
@@ -46,12 +49,13 @@ cax = axarr[3].imshow(T)
 axarr[3].set_aspect('auto')
 fig1.colorbar(cax)
 
-data = [i for i in T.flat if i != 0]
 params = double_gaussian_curve_fit(T)
 fig2 = plt.figure()
 ax2 = fig2.add_subplot(111)
 T_test_nonzero = np.array(data)
-ax2.hist(T_test_nonzero,bins=50,log=True)
+_,bins,_ = ax2.hist(T_test_nonzero,bins=100,log=True)
+y = np.maximum(bimodal(bins,*params),10)
+ax2.plot(bins,y)
 
 plt.show()
 

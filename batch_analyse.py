@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from analysis_tools_cython import *
 from functools import partial
+from scipy.stats import skew
 import multiprocessing
 import os
 import sys
@@ -28,8 +29,9 @@ def process_file(lock,of,path,f):
     T = test_statistic_array(flux,60)
     params = double_gaussian_curve_fit(T)
     ratio,separation = interpret(params)
+    s = skew(nonzero(T)) 
 
-    result_str = ' '.join([f, str(ratio), str(separation), str(T.min())])
+    result_str = ' '.join([f, str(ratio), str(separation), str(T.min()),str(s)])
     lock.acquire()
     with open(of,'a') as out_file:
         out_file.write(result_str+'\n')
