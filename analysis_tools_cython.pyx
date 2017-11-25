@@ -14,15 +14,21 @@ def import_lightcurve(file_path):
     except FileNotFoundError:
         print("Import failed: file not found")
 
-        return (0, 0)
-
     scidata = hdulist[1].data
     table = Table(scidata)['TIME','PDCSAP_FLUX']
 
     # Delete rows containing NaN values.
-    nan_rows = [ i for i in range(len(table)) if math.isnan(table[i][1]) or math.isnan(table[i][0]) ]
+    nan_rows = [ i for i in range(len(table)) if 
+            math.isnan(table[i][1]) or math.isnan(table[i][0]) ]
 
     table.remove_rows(nan_rows)
+
+    # Smooth data by deleting overly 'spikey' points.
+    spikes = [ i for i in range(1,len(table)-1) if \
+            abs(table[i][1] - 0.5*(table[i-1][1]+table[i+1][1])) \
+            > 5*abs(table[i+1][1] - table[i-1][1])]
+
+    table.remove_rows(spikes)
 
     return table
 
