@@ -29,16 +29,16 @@ T = test_statistic_array(filteredflux,60)
 data = nonzero(T)
 
 # Find minimum test statistic value, and its location.
-minT_pos = np.unravel_index(T.argmin(),T.shape)
-minT = T[minT_pos]
-minT_time = t[minT_pos[1]]
-minT_duration = 2*minT_pos[0]*timestep
+m,n = np.unravel_index(T.argmin(),T.shape)
+minT = T[m,n]
+minT_time = t[n]
+minT_duration = 2*m*timestep
 print("Maximum transit chance:")
 print("   Time =",round(minT_time,2),"days.")
 print("   Duration =",round(minT_duration,2),"days.")
 print("   T =",round(minT,1))
 print("Skew =",round(skew(data),2))
-print("Transit depth =",round(1+flux[minT_pos[1]],6))
+print("Transit depth =",round(flux[n-m:n+m].mean(),6))
 
 
 fig1,axarr = plt.subplots(4)
