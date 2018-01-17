@@ -24,9 +24,10 @@ def process_file(lock,of,path,f):
     try:
         f_path = os.path.join(path,f)
         table = import_lightcurve(f_path)
-        t,flux = clean_data(table)
+        t,flux,real = clean_data(table)
         flux = normalise_flux(flux)
-        flux = fourier_filter(flux,8)
+        lombscargle_filter(t,flux,real,0.05)
+        flux = flux * real
         T = test_statistic_array(flux,60)
         Tm = T.min()
         Ts = nonzero(T).std()

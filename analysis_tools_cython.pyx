@@ -1,10 +1,13 @@
 from astropy.io import fits
 from astropy.table import Table
 from scipy.optimize import curve_fit
+from gatspy.periodic import LombScargleFast
 import numpy as np
 cimport numpy as np
 import math
+import sys,os
 
+model = LombScargleFast(fit_period=True)
 
 def import_lightcurve(file_path):
     """Returns (N by 2) table, columns are (time, flux)."""
@@ -18,7 +21,7 @@ def import_lightcurve(file_path):
     table = Table(scidata)['TIME','PDCSAP_FLUX']
 
     # Delete rows containing NaN values.
-    nan_rows = [ i for i in range(len(table)) if 
+    nan_rows = [ i for i in range(len(table)) if
             math.isnan(table[i][1]) or math.isnan(table[i][0]) ]
 
     table.remove_rows(nan_rows)
@@ -44,10 +47,12 @@ def calculate_timestep(table):
 
 def clean_data(table):
     """Interpolates missing data points, so we have equal time gaps
-    between points. Returns two numpy arrays, time, flux"""
+    between points. Returns three numpy arrays, time, flux, real.
+    real is 0 if data point interpolated, 1 otherwise."""
 
     t = []
     x = []
+    r = []
     timestep = calculate_timestep(table)
 
     for row in table:
@@ -62,11 +67,13 @@ def clean_data(table):
                 for _ in range(steps-1):
                     t.append(timestep + t[-1])
                     x.append(fluxstep + x[-1])
+                    r.append(0)
 
         t.append(ti)
         x.append(xi)
+        r.append(1)
 
-    return np.array(t),np.array(x)
+    return np.array(t),np.array(x),np.array(r)
 
 
 def normalise_flux(flux):
@@ -95,6 +102,29 @@ def fourier_filter(flux,freq_count):
     fitted_flux = np.fft.irfft(B,len(flux))
 
     return flux - fitted_flux
+
+
+def lombscargle_filter(time,flux,real,min_score):
+    """Also removes periodic noise, using lomb scargle methods."""
+    time_real = time[real == 1]
+
+    model.optimizer.period_range = (0.01,time[-1]-time[0])
+
+    # Disable prints as model.fit() is very verbose.
+    sys.stdout = open(os.devnull, 'w')
+    sys.stderr = open(os.devnull, 'w')
+
+    for _ in range(20):
+        flux_real = flux[real == 1]
+        model.fit(time_real,flux_real)
+
+        if model.score(model.best_period) < min_score:
+            break
+
+        flux -= model.predict(time)
+
+    sys.stdout = sys.__stdout__
+    sys.stderr = sys.__stderr__
 
 
 def test_statistic_array(np.ndarray[np.float64_t,ndim=1]  flux, int max_half_width):
