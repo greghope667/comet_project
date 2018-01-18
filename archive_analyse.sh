@@ -1,3 +1,4 @@
+#!/bin/bash
 usage()
 {
 echo "(basename "$0") [-h] [-t THREADS] [-o OF] -w WORKDIR file1 [file2 ...]
@@ -35,8 +36,7 @@ fi
 
 shift $((OPTIND-1))
 
-for file in "$@"
-do
+for file in "$@"; do
     echo "Current file: $file"
     echo "Checking disk space requirements"
     size=$(tar tzvf $file | awk '{s+=$3} END{print s}')
@@ -47,14 +47,38 @@ do
         continue
     fi
 
-    echo "Extracting file"
+    echo "Extracting archive"
     tar xzf $file -C $workdir
 
-    echo "$(ls -l $workdir | wc -l) files extracted"
-    ./batch_analyse.py -t $threads -o $workdir/out.txt $workdir
+    file_count=$( find $workdir -name '*.fits' | wc -l )
+    echo "$file_count files extracted"
+
+    if [ -f $workdir/out.txt ]; then
+        rm $workdir/out.txt
+    fi
+
+    ./batch_analyse.py -t $threads -o $workdir/out.txt $workdir &
+
+    while [ ! -f $workdir/out.txt ]
+    do
+        sleep 1
+    done
+
+    while true; do
+        count=$(wc -l $workdir/out.txt | awk '{print $1}')
+        printf "\rProcessed: $count"
+        if (($count == $file_count)); then
+            break
+        fi
+        sleep 1
+    done
+
+    printf "\n"
+    sleep 1
 
     cat $workdir/out.txt >> $outputfile
 
-    echo "Cleaning temporary files\n"
-    find $workdir -not -name '.' | xargs rm
+    echo "Cleaning temporary files"
+    find $workdir -name '*.fits' | xargs rm
+    rm $workdir/out.txt
 done
