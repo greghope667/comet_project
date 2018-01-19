@@ -16,6 +16,7 @@ def import_lightcurve(file_path):
         hdulist = fits.open(file_path)
     except FileNotFoundError:
         print("Import failed: file not found")
+        return
 
     scidata = hdulist[1].data
     table = Table(scidata)['TIME','PDCSAP_FLUX']
@@ -114,14 +115,17 @@ def lombscargle_filter(time,flux,real,min_score):
     sys.stdout = open(os.devnull, 'w')
     sys.stderr = open(os.devnull, 'w')
 
-    for _ in range(20):
-        flux_real = flux[real == 1]
-        model.fit(time_real,flux_real)
+    try:
+        for _ in range(20):
+            flux_real = flux[real == 1]
+            model.fit(time_real,flux_real)
 
-        if model.score(model.best_period) < min_score:
-            break
+            if model.score(model.best_period) < min_score:
+                break
 
-        flux -= model.predict(time)
+            flux -= model.predict(time)
+    except:
+        pass
 
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
