@@ -7,7 +7,7 @@ cimport numpy as np
 import math
 import sys,os
 
-model = LombScargleFast(fit_period=True)
+model = LombScargleFast(fit_period=True, silence_warnings=True)
 
 def import_lightcurve(file_path):
     """Returns (N by 2) table, columns are (time, flux)."""
@@ -110,10 +110,7 @@ def lombscargle_filter(time,flux,real,min_score):
     time_real = time[real == 1]
 
     model.optimizer.period_range = (0.01,time[-1]-time[0])
-
-    # Disable prints as model.fit() is very verbose.
-    sys.stdout = open(os.devnull, 'w')
-    sys.stderr = open(os.devnull, 'w')
+    model.optimizer.quiet = True
 
     try:
         for _ in range(20):
@@ -126,9 +123,6 @@ def lombscargle_filter(time,flux,real,min_score):
             flux -= model.predict(time)
     except:
         pass
-
-    sys.stdout = sys.__stdout__
-    sys.stderr = sys.__stderr__
 
 
 def test_statistic_array(np.ndarray[np.float64_t,ndim=1]  flux, int max_half_width):
