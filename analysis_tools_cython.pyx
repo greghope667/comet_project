@@ -111,7 +111,7 @@ def lombscargle_filter(time,flux,real,min_score):
 
     period = time[-1]-time[0]
     N = len(time)
-    nyquist_period = N/(2*period)
+    nyquist_period = (2*period)/N
     model.optimizer.period_range = (nyquist_period,period)
     model.optimizer.quiet = True
 
