@@ -109,11 +109,14 @@ def lombscargle_filter(time,flux,real,min_score):
     """Also removes periodic noise, using lomb scargle methods."""
     time_real = time[real == 1]
 
-    model.optimizer.period_range = (0.01,time[-1]-time[0])
+    period = time[-1]-time[0]
+    N = len(time)
+    nyquist_period = N/(2*period)
+    model.optimizer.period_range = (nyquist_period,period)
     model.optimizer.quiet = True
 
     try:
-        for _ in range(20):
+        for _ in range(30):
             flux_real = flux[real == 1]
             model.fit(time_real,flux_real)
 

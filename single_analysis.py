@@ -43,9 +43,10 @@ print("Maximum transit chance:")
 print("   Time =",round(minT_time,2),"days.")
 print("   Duration =",round(minT_duration,2),"days.")
 print("   T =",round(minT,1))
+print("   T/sigma =",round(minT/data.std(),1))
 print("Transit depth =",round(flux[n-m:n+m].mean(),6))
 
-
+#plt.xkcd()
 fig1,axarr = plt.subplots(4)
 axarr[0].plot(A_mag)
 axarr[1].plot(t,flux+ones,t,periodicnoise_ls+ones)
