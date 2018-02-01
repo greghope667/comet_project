@@ -30,9 +30,10 @@ def import_lightcurve(file_path):
     # Smooth data by deleting overly 'spikey' points.
     spikes = [ i for i in range(1,len(table)-1) if \
             abs(table[i][1] - 0.5*(table[i-1][1]+table[i+1][1])) \
-            > 5*abs(table[i+1][1] - table[i-1][1])]
+            > 3*abs(table[i+1][1] - table[i-1][1])]
 
-    table.remove_rows(spikes)
+    for i in spikes:
+        table[i][1] = 0.5*(table[i-1][1] + table[i+1][1])
 
     return table
 
