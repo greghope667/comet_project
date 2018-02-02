@@ -29,15 +29,16 @@ def process_file(lock,of,path,f):
         lombscargle_filter(t,flux,real,0.05)
         flux = flux * real
         T = test_statistic_array(flux,60)
-        Tm = T.min()
-        Ts = nonzero(T).std()
-#        params = double_gaussian_curve_fit(T)
-#        ratio,separation = interpret(params)
-#        s = skew(nonzero(T)) 
 
-#        result_str = ' '.join([f, str(ratio), str(separation), 
-#                                str(T.min()),str(s)])
-        result_str = ' '.join([f, str(Tm), str(Tm/Ts)])
+        Ts = nonzero(T).std()
+        m,n = np.unravel_index(T.argmin(),T.shape)
+        Tm = T[m,n]
+        Tm_time = t[n]
+        Tm_duration = 2*m*calculate_timestep(table)
+        Tm_depth = flux[n-m:n+m].mean()
+
+        result_str = ' '.join([f, str(Tm), str(Tm/Ts),str(Tm_time),
+                                str(Tm_duration),str(Tm_depth)])
         lock.acquire()
         with open(of,'a') as out_file:
             out_file.write(result_str+'\n')
