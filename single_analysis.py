@@ -46,6 +46,19 @@ print("   T =",round(minT,1))
 print("   T/sigma =",round(minT/data.std(),1))
 print("Transit depth =",round(flux[n-m:n+m].mean(),6))
 
+# Transit shape calculation
+if n-8*m >= 0 and n+8*m < N:
+    t2 = t[n-8*m:n+8*m]
+    x2 = flux_ls[n-8*m:n+8*m]
+    background = (sum(x2[:4*m]) + sum(x2[12*m:]))/(8*m)
+    x2 -= background
+    params1 = single_gaussian_curve_fit(t2,-x2)
+    y2 = -gauss(t2,*params1)
+    params2 = single_gaussian_curve_fit(t2,y2-x2)
+    z2 = -gauss(t2,*params2)
+
+    print(interpret([*params1,*params2]))
+
 #plt.xkcd()
 fig1,axarr = plt.subplots(4)
 axarr[0].plot(A_mag)
@@ -56,12 +69,16 @@ axarr[3].set_aspect('auto')
 fig1.colorbar(cax)
 
 #params = double_gaussian_curve_fit(T)
-#fig2 = plt.figure()
-#ax2 = fig2.add_subplot(111)
+fig2 = plt.figure()
+ax2 = fig2.add_subplot(111)
 #T_test_nonzero = np.array(data)
 #_,bins,_ = ax2.hist(T_test_nonzero,bins=100,log=True)
 #y = np.maximum(bimodal(bins,*params),10)
 #ax2.plot(bins,y)
+try:
+    ax2.plot(t2,x2,t2,y2,t2,z2)
+except:
+    pass
 
 plt.show()
 
