@@ -164,6 +164,14 @@ def gauss(x,A,mu,sigma):
 def bimodal(x,A1,mu1,sigma1,A2,mu2,sigma2):
     return gauss(x,A1,mu1,sigma1)+gauss(x,A2,mu2,sigma2)
 
+def skewed_gauss(x,A,mu,sigma1,sigma2):
+    y = np.zeros(len(x))
+    for i in range(len(x)):
+        if x[i] < mu:
+            y[i] = gauss(x[i],A,mu,sigma1)
+        else:
+            y[i] = gauss(x[i],A,mu,sigma2)
+    return y
 
 def single_gaussian_curve_fit(x,y):
     # Initial parameters guess
@@ -180,6 +188,19 @@ def single_gaussian_curve_fit(x,y):
 def nonzero(T):
     """Returns a 1d array of the nonzero elements of the array T"""
     return np.array([i for i in T.flat if i != 0])
+
+
+def skewed_gaussian_curve_fit(x,y):
+    # Initial parameters guess
+    i = np.argmax(y)
+    A0 = y[i]
+    mu0 = x[i]
+    sigma0 = 1
+
+    params_bounds = [[0,x[0],0,0], [np.inf,x[-1],np.inf,np.inf]]
+    params,cov = curve_fit(skewed_gauss,x,y,[A0,mu0,sigma0,sigma0],
+                           bounds=params_bounds)
+    return params
 
 
 def double_gaussian_curve_fit(T):
@@ -222,4 +243,16 @@ def interpret(params):
     separation = (mu2 - mu1)/sigma1
 
     return height_ratio,separation
+
+
+def classify(m,n,real):
+    N = len(real)
+    if n-2*m < 0 or n+2*m > N:
+        return "end"
+    elif m < 3:
+        return "point"
+    elif real[(n-2*m):(n-m)].sum() < 0.5*m:
+        return "artefact"
+    else:
+        return "maybeTransit"
 

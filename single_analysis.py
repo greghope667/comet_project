@@ -57,10 +57,13 @@ if n-8*m >= 0 and n+8*m < N:
     x2 -= background
     params1 = single_gaussian_curve_fit(t2,-x2)
     y2 = -gauss(t2,*params1)
-    params2 = single_gaussian_curve_fit(t2,y2-x2)
-    z2 = -gauss(t2,*params2)
+    params2 = skewed_gaussian_curve_fit(t2,-x2)
+    z2 = -skewed_gauss(t2,*params2)
 
-    print(interpret([*params1,*params2]))
+    print([*params1,*params2])
+
+# Classify events
+print(classify(m,n,real))
 
 #plt.xkcd()
 fig1,axarr = plt.subplots(4)

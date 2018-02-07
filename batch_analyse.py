@@ -38,8 +38,10 @@ def process_file(lock,of,path,f):
         Tm_end = Tm_start + m
         Tm_depth = flux[Tm_start:Tm_end].mean()
 
+        s = classify(m,n,real)
+
         result_str = ' '.join([f, str(Tm), str(Tm/Ts),str(Tm_time),
-                                str(Tm_duration),str(Tm_depth)])
+                                str(Tm_duration),str(Tm_depth),s])
         lock.acquire()
         with open(of,'a') as out_file:
             out_file.write(result_str+'\n')
