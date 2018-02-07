@@ -27,15 +27,16 @@ def process_file(lock,of,path,f):
         t,flux,real = clean_data(table)
         flux = normalise_flux(flux)
         lombscargle_filter(t,flux,real,0.05)
-        flux = flux * real
-        T = test_statistic_array(flux,60)
+        T = test_statistic_array(flux*real,60)
 
         Ts = nonzero(T).std()
         m,n = np.unravel_index(T.argmin(),T.shape)
         Tm = T[m,n]
         Tm_time = t[n]
-        Tm_duration = 2*m*calculate_timestep(table)
-        Tm_depth = flux[n-m:n+m].mean()
+        Tm_duration = m*calculate_timestep(table)
+        Tm_start = n-math.floor((m-1)/2)
+        Tm_end = Tm_start + m
+        Tm_depth = flux[Tm_start:Tm_end].mean()
 
         result_str = ' '.join([f, str(Tm), str(Tm/Ts),str(Tm_time),
                                 str(Tm_duration),str(Tm_depth)])

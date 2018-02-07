@@ -38,13 +38,16 @@ data = nonzero(T)
 m,n = np.unravel_index(T.argmin(),T.shape)
 minT = T[m,n]
 minT_time = t[n]
-minT_duration = 2*m*timestep
+minT_duration = m*timestep
 print("Maximum transit chance:")
 print("   Time =",round(minT_time,2),"days.")
 print("   Duration =",round(minT_duration,2),"days.")
 print("   T =",round(minT,1))
 print("   T/sigma =",round(minT/data.std(),1))
-print("Transit depth =",round(flux[n-m:n+m].mean(),6))
+
+trans_start = n - math.floor((m-1)/2)
+trans_end = trans_start + m
+print("Transit depth =",round(flux[trans_start:trans_end].mean(),6))
 
 # Transit shape calculation
 if n-8*m >= 0 and n+8*m < N:

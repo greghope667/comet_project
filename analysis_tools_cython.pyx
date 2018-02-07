@@ -129,7 +129,7 @@ def lombscargle_filter(time,flux,real,min_score):
         pass
 
 
-def test_statistic_array(np.ndarray[np.float64_t,ndim=1]  flux, int max_half_width):
+def test_statistic_array(np.ndarray[np.float64_t,ndim=1] flux, int max_half_width):
     cdef int N = flux.shape[0]
     cdef int n = max_half_width
 
@@ -137,19 +137,22 @@ def test_statistic_array(np.ndarray[np.float64_t,ndim=1]  flux, int max_half_wid
     cdef float mu,sigma,norm_factor
     sigma = flux.std()
 
-    cdef np.ndarray[dtype=np.float64_t,ndim=2] t_test = np.zeros([n,N])
+    cdef np.ndarray[dtype=np.float64_t,ndim=2] t_test = np.zeros([2*n,N])
 #    cdef np.ndarray[dtype=np.float64_t,ndim=1] flux_points = np.zeros(2*n)
-    for m in range(1,n):
+    for m in range(1,2*n):
 
-        norm_factor = 1 / ((2*m)**0.5 * sigma)
+        m1 = math.floor((m-1)/2)
+        m2 = (m-1) - m1
 
-        mu = flux[0:(2*m)].sum()
-        t_test[m][m] = mu * norm_factor
+        norm_factor = 1 / (m**0.5 * sigma)
 
-        for i in range(m+1,N-m):
+        mu = flux[0:m].sum()
+        t_test[m][m1] = mu * norm_factor
 
-            ##mu = flux[(i-m):(i+m)].sum()
-            mu += (flux[i+m-1] - flux[i-m-1])
+        for i in range(m1+1,N-m2-1):
+
+            ##t_test[m][i] = flux[(i-m1):(i+m2+1)].sum() * norm_factor
+            mu += (flux[i+m2] - flux[i-m1-1])
             t_test[m][i] = mu * norm_factor
 
     return t_test
