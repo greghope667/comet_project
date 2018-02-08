@@ -50,17 +50,21 @@ trans_end = trans_start + m
 print("Transit depth =",round(flux[trans_start:trans_end].mean(),6))
 
 # Transit shape calculation
-if n-8*m >= 0 and n+8*m < N:
-    t2 = t[n-8*m:n+8*m]
-    x2 = flux_ls[n-8*m:n+8*m]
-    background = (sum(x2[:4*m]) + sum(x2[12*m:]))/(8*m)
+if n-3*m >= 0 and n+3*m < N:
+    t2 = t[n-3*m:n+3*m]
+    x2 = flux_ls[n-3*m:n+3*m]
+    background = (sum(x2[:1*m]) + sum(x2[5*m:]))/(2*m)
     x2 -= background
     params1 = single_gaussian_curve_fit(t2,-x2)
     y2 = -gauss(t2,*params1)
     params2 = skewed_gaussian_curve_fit(t2,-x2)
     z2 = -skewed_gauss(t2,*params2)
+    params3 = comet_curve_fit(t2,-x2)
+    w2 = -comet_curve(t2,*params3)
 
-    print([*params1,*params2])
+    scores = [score_fit(x2,fit) for fit in [y2, z2, w2]]
+    print(scores)
+    print("Asym score:",round(scores[0]/scores[2],4))
 
 # Classify events
 print(classify(m,n,real))
@@ -82,7 +86,7 @@ ax2 = fig2.add_subplot(111)
 #y = np.maximum(bimodal(bins,*params),10)
 #ax2.plot(bins,y)
 try:
-    ax2.plot(t2,x2,t2,y2,t2,z2)
+    ax2.plot(t2,x2,t2,y2,t2,z2,t2,w2)
 except:
     pass
 

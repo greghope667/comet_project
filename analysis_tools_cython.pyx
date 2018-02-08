@@ -173,6 +173,17 @@ def skewed_gauss(x,A,mu,sigma1,sigma2):
             y[i] = gauss(x[i],A,mu,sigma2)
     return y
 
+
+def comet_curve(x,A,mu,sigma,tail):
+    y = np.zeros(len(x))
+    for i in range(len(x)):
+        if x[i] < mu:
+            y[i] = gauss(x[i],A,mu,sigma)
+        else:
+            y[i] = A*math.exp(-abs(x[i]-mu)/tail)
+    return y
+
+
 def single_gaussian_curve_fit(x,y):
     # Initial parameters guess
     i = np.argmax(y)
@@ -199,6 +210,20 @@ def skewed_gaussian_curve_fit(x,y):
 
     params_bounds = [[0,x[0],0,0], [np.inf,x[-1],np.inf,np.inf]]
     params,cov = curve_fit(skewed_gauss,x,y,[A0,mu0,sigma0,sigma0],
+                           bounds=params_bounds)
+    return params
+
+
+def comet_curve_fit(x,y):
+    # Initial parameters guess
+    i = np.argmax(y)
+    A0 = y[i]
+    mu0 = x[i]
+    sigma0 = 1
+    tail0 = 1
+
+    params_bounds = [[0,x[0],0,0], [np.inf,x[-1],np.inf,np.inf]]
+    params,cov = curve_fit(comet_curve,x,y,[A0,mu0,sigma0,tail0],
                            bounds=params_bounds)
     return params
 
@@ -230,6 +255,10 @@ def double_gaussian_curve_fit(T):
     params = [*params1,*params2]
 
     return params
+
+
+def score_fit(y,fit):
+    return sum(((y[i]-fit[i])**2 for i in range(len(y))))
 
 
 def interpret(params):
