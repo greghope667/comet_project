@@ -222,7 +222,9 @@ def comet_curve_fit(x,y):
     sigma0 = 1
     tail0 = 1
 
-    params_bounds = [[0,x[0],0,0], [np.inf,x[-1],np.inf,np.inf]]
+    width = (x[-1]-x[0])
+
+    params_bounds = [[0,x[0],0,0], [np.inf,x[-1],width,width]]
     params,cov = curve_fit(comet_curve,x,y,[A0,mu0,sigma0,tail0],
                            bounds=params_bounds)
     return params
@@ -287,14 +289,25 @@ def classify(m,n,real):
 
 
 def calc_asymmetry(m,n,time,flux):
+    """Fit both symmetric and comet-like transit profiles and compare fit.
+
+    Returns ratio of (errors squared)
+    Possible errors and return values:
+    -1 : Divide by zero as comet profile is exact fit
+    -2 : Too close to end of light curve to fit profile
+    -3 : Unable to fit model (e.g. timeout)
+    """
     if n-3*m >= 0 and n+3*m < len(time):
         t = time[n-3*m:n+3*m]
         x = flux[n-3*m:n+3*m]
         background_level = (sum(x[:m]) + sum(x[5*m:]))/(2*m)
         x -= background_level
 
-        params1 = single_gaussian_curve_fit(t,-x)
-        params2 = comet_curve_fit(t,-x)
+        try:
+            params1 = single_gaussian_curve_fit(t,-x)
+            params2 = comet_curve_fit(t,-x)
+        except:
+            return -3
 
         fit1 = -gauss(t,*params1)
         fit2 = -comet_curve(t,*params2)
@@ -305,5 +318,5 @@ def calc_asymmetry(m,n,time,flux):
         else:
             return -1
     else:
-        return 0
+        return -2
 
