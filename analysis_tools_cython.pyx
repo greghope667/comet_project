@@ -285,3 +285,25 @@ def classify(m,n,real):
     else:
         return "maybeTransit"
 
+
+def calc_asymmetry(m,n,time,flux):
+    if n-3*m >= 0 and n+3*m < len(time):
+        t = time[n-3*m:n+3*m]
+        x = flux[n-3*m:n+3*m]
+        background_level = (sum(x[:m]) + sum(x[5*m:]))/(2*m)
+        x -= background_level
+
+        params1 = single_gaussian_curve_fit(t,-x)
+        params2 = comet_curve_fit(t,-x)
+
+        fit1 = -gauss(t,*params1)
+        fit2 = -comet_curve(t,*params2)
+
+        scores = [score_fit(x,fit) for fit in [fit1,fit2]]
+        if scores[1] > 0:
+            return scores[0]/scores[1]
+        else:
+            return -1
+    else:
+        return 0
+

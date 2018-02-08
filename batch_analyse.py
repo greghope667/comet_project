@@ -27,7 +27,8 @@ def process_file(lock,of,path,f):
         t,flux,real = clean_data(table)
         flux = normalise_flux(flux)
         lombscargle_filter(t,flux,real,0.05)
-        T = test_statistic_array(flux*real,60)
+        flux = flux*real
+        T = test_statistic_array(flux,60)
 
         Ts = nonzero(T).std()
         m,n = np.unravel_index(T.argmin(),T.shape)
@@ -39,9 +40,15 @@ def process_file(lock,of,path,f):
         Tm_depth = flux[Tm_start:Tm_end].mean()
 
         s = classify(m,n,real)
+        asym = calc_asymmetry(m,n,t,flux)
 
-        result_str = ' '.join([f, str(Tm), str(Tm/Ts),str(Tm_time),
-                                str(Tm_duration),str(Tm_depth),s])
+#        result_str = ' '.join([f, str(Tm), str(Tm/Ts),str(asym),
+#                            str(Tm_time),str(Tm_duration),str(Tm_depth),s])
+
+        result_str = f+' '+\
+            ' '.join([str(round(a,8)) for a in 
+                [Tm, Tm/Ts, asym,Tm_time,Tm_duration,Tm_depth]])+' '+s
+
         lock.acquire()
         with open(of,'a') as out_file:
             out_file.write(result_str+'\n')
