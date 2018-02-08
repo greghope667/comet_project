@@ -1,18 +1,35 @@
 #!/bin/bash
-usage()
-{
-echo "(basename "$0") [-h] [-t THREADS] [-o OF] -w WORKDIR file1 [file2 ...]
+usage() {
+echo "Usage:
+$0 [-h] [-k] [-t THREADS] [-o OF] -w WORKDIR file1.tgz [file2.tgz ...]
 
-Runs analysis on light curves in target zip files."
+Runs analysis on light curves in target compressed archives.
+
+Parameters:
+    -h  Display this text.
+    -k  Keeps temporary files on completion.
+        (do not use with multiple archives)
+    -t  Number of threads to use (default is 1).
+    -o  File to output results to (default ./output.txt).
+    -w  Working directory to store temporary extracted files."
 exit 1
+}
+
+format_time() {
+    local seconds=$1
+    local h=$(( $seconds / 3600 ))
+    local m=$(( $seconds % 3600 / 60 ))
+    local s=$(( $seconds % 60 ))
+    printf "%02d:%02d:%02d" $h $m $s
 }
 
 # Default options
 threads=1
 outputfile="output.txt"
 workdir=""
+keepfiles=false
 
-while getopts 'ht:o:w:' opt; do
+while getopts ':hkt:o:w:' opt; do
     case $opt in
         h)
             usage
@@ -25,6 +42,12 @@ while getopts 'ht:o:w:' opt; do
             ;;
         w)
             workdir=${OPTARG}
+            ;;
+        k)
+            keepfiles=true
+            ;;
+        *)
+            usage
             ;;
     esac
 done
@@ -59,6 +82,8 @@ for file in "$@"; do
 
     ./batch_analyse.py -t $threads -o $workdir/out.txt $workdir &
 
+    start_time=$SECONDS
+
     while [ ! -f $workdir/out.txt ]
     do
         sleep 1
@@ -66,7 +91,12 @@ for file in "$@"; do
 
     while true; do
         count=$(wc -l $workdir/out.txt | awk '{print $1}')
-        printf "\rProcessed: $count"
+        elapsed_time=$(( $SECONDS - $start_time ))
+        remaining_count=$(( $file_count - $count ))
+        remaining_time=$(( $remaining_count * $elapsed_time / $count ))
+
+        printf "\rProcessed: $count   ETA: $( format_time $remaining_time )"
+
         if (($count == $file_count)); then
             break
         fi
@@ -78,7 +108,11 @@ for file in "$@"; do
 
     cat $workdir/out.txt >> $outputfile
 
-    echo "Cleaning temporary files"
-    find $workdir -name '*.fits' | xargs rm
-    rm $workdir/out.txt
+    if [ ! $keepfiles ]; then
+        echo "Cleaning temporary files"
+        find $workdir -name '*.fits' | xargs rm
+        rm $workdir/out.txt
+    fi
+
+    echo "Elapsed time: $( format_time $(( $SECONDS - $start_time )) )"
 done
