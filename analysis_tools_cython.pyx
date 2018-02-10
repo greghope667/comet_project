@@ -189,9 +189,9 @@ def single_gaussian_curve_fit(x,y):
     i = np.argmax(y)
     A0 = y[i]
     mu0 = x[i]
-    sigma0 = 1
+    sigma0 = (x[-1]-x[0])/4
 
-    params_bounds = [[0,x[0],0], [np.inf,x[-1],np.inf]]
+    params_bounds = [[0,x[0],0], [np.inf,x[-1],sigma0*4]]
     params,cov = curve_fit(gauss,x,y,[A0,mu0,sigma0],bounds=params_bounds)
     return params
 
@@ -204,29 +204,27 @@ def nonzero(T):
 def skewed_gaussian_curve_fit(x,y):
     # Initial parameters guess
     i = np.argmax(y)
-    A0 = y[i]
-    mu0 = x[i]
-    sigma0 = 1
 
-    params_bounds = [[0,x[0],0,0], [np.inf,x[-1],np.inf,np.inf]]
-    params,cov = curve_fit(skewed_gauss,x,y,[A0,mu0,sigma0,sigma0],
-                           bounds=params_bounds)
+    width = x[-1]-x[0]
+
+    params_init = [y[i],x[i],width/3,width/3]
+
+    params_bounds = [[0,x[0],0,0], [np.inf,x[-1],width/2,width/2]]
+    params,cov = curve_fit(skewed_gauss,x,y,params_init,
+                            bounds=params_bounds)
     return params
 
 
 def comet_curve_fit(x,y):
     # Initial parameters guess
     i = np.argmax(y)
-    A0 = y[i]
-    mu0 = x[i]
-    sigma0 = 1
-    tail0 = 1
 
-    width = (x[-1]-x[0])
+    width = x[-1]-x[0]
 
-    params_bounds = [[0,x[0],0,0], [np.inf,x[-1],width,width]]
-    params,cov = curve_fit(comet_curve,x,y,[A0,mu0,sigma0,tail0],
-                           bounds=params_bounds)
+    params_init = [y[i],x[i],width/3,width/3]
+
+    params_bounds = [[0,x[0],0,0], [np.inf,x[-1],width/2,width/2]]
+    params,cov = curve_fit(comet_curve,x,y,params_init,bounds=params_bounds)
     return params
 
 
