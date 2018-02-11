@@ -1,7 +1,7 @@
 #!/bin/bash
 usage() {
 echo "Usage:
-$0 [-h] [-k] [-t THREADS] [-o OF] -w WORKDIR file1.tgz [file2.tgz ...]
+$0 [-h] [-sk] [-t THREADS] [-o OF] -w WORKDIR file1.tgz [file2.tgz ...]
 
 Runs analysis on light curves in target compressed archives.
 
@@ -9,8 +9,9 @@ Parameters:
     -h  Display this text.
     -k  Keeps temporary files on completion.
         (do not use with multiple archives)
-    -t  Number of threads to use (default is 1).
     -o  File to output results to (default ./output.txt).
+    -s  Split output to multiple files.
+    -t  Number of threads to use (default is 1).
     -w  Working directory to store temporary extracted files."
 exit 1
 }
@@ -28,8 +29,9 @@ threads=1
 outputfile="output.txt"
 workdir=""
 keepfiles=false
+splitout=false
 
-while getopts ':hkt:o:w:' opt; do
+while getopts ':hskt:o:w:' opt; do
     case $opt in
         h)
             usage
@@ -45,6 +47,9 @@ while getopts ':hkt:o:w:' opt; do
             ;;
         k)
             keepfiles=true
+            ;;
+        s)
+            splitout=true
             ;;
         *)
             usage
@@ -106,9 +111,15 @@ for file in "$@"; do
     printf "\n"
     sleep 1
 
-    cat $workdir/out.txt >> $outputfile
+    if $splitout; then
+        suffix="$(basename $file .tgz)"
+    else
+        suffix=""
+    fi
 
-    if [ ! $keepfiles ]; then
+    cat $workdir/out.txt >> $outputfile$suffix
+
+    if ! $keepfiles; then
         echo "Cleaning temporary files"
         find $workdir -name '*.fits' | xargs rm
         rm $workdir/out.txt
