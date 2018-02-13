@@ -55,7 +55,7 @@ def process_file(f_path):
         f = os.path.basename(f_path)
 
         result_str = f+' '+\
-            ' '.join([str(round(a,8)) for a in 
+            ' '.join([str(round(a,8)) for a in
                 [Tm, Tm/Ts, asym,Tm_time,Tm_duration,Tm_depth]])+' '+s
 
         lock.acquire()

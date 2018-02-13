@@ -1,13 +1,12 @@
 from astropy.io import fits
 from astropy.table import Table
 from scipy.optimize import curve_fit
-from gatspy.periodic import LombScargleFast
+from astropy.stats import LombScargle
 import numpy as np
 cimport numpy as np
 import math
 import sys,os
 
-model = LombScargleFast(fit_period=True, silence_warnings=True)
 
 def import_lightcurve(file_path):
     """Returns (N by 2) table, columns are (time, flux)."""
@@ -113,18 +112,26 @@ def lombscargle_filter(time,flux,real,min_score):
     period = time[-1]-time[0]
     N = len(time)
     nyquist_period = (2*period)/N
-    model.optimizer.period_range = (nyquist_period,period)
-    model.optimizer.quiet = True
+
+    min_freq = 1/period
+    nyquist_freq = N/(2*period)
 
     try:
         for _ in range(30):
             flux_real = flux[real == 1]
-            model.fit(time_real,flux_real)
+            ls = LombScargle(time_real,flux_real)
+            powers = ls.autopower(method='fast',
+                                  minimum_frequency=min_freq,
+                                  maximum_frequency=nyquist_freq,
+                                  samples_per_peak=10)
 
-            if model.score(model.best_period) < min_score:
+            i = np.argmax(powers[1])
+
+            if powers[1][i] < min_score:
                 break
 
-            flux -= model.predict(time)
+            flux -= ls.model(time,powers[0][i])
+            del ls
     except:
         pass
 
