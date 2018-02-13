@@ -19,10 +19,20 @@ parser.add_argument('-t', help='number of threads to use',default=1,
 parser.add_argument('-o',default='output.txt',dest='of',help='output file')
 
 
-def process_file(lock,of,path,f):
+# Get directories from command line arguments.
+args = parser.parse_args()
 
+paths = []
+for path in args.path:
+    paths.append( os.path.expanduser(path) )
+
+## Prepare multithreading.
+m = multiprocessing.Manager()
+lock = m.Lock()
+
+
+def process_file(f_path):
     try:
-        f_path = os.path.join(path,f)
         table = import_lightcurve(f_path)
         t,flux,real = clean_data(table)
         flux = normalise_flux(flux)
@@ -42,15 +52,14 @@ def process_file(lock,of,path,f):
         s = classify(m,n,real)
         asym = calc_asymmetry(m,n,t,flux)
 
-#        result_str = ' '.join([f, str(Tm), str(Tm/Ts),str(asym),
-#                            str(Tm_time),str(Tm_duration),str(Tm_depth),s])
+        f = os.path.basename(f_path)
 
         result_str = f+' '+\
             ' '.join([str(round(a,8)) for a in 
                 [Tm, Tm/Ts, asym,Tm_time,Tm_duration,Tm_depth]])+' '+s
 
         lock.acquire()
-        with open(of,'a') as out_file:
+        with open(args.of,'a') as out_file:
             out_file.write(result_str+'\n')
         lock.release()
     except (KeyboardInterrupt, SystemExit):
@@ -58,22 +67,11 @@ def process_file(lock,of,path,f):
         raise
     except Exception as e:
         traceback.print_exc()
-        print("\n",file=sys.stderr)
+        print("Error!\n",file=sys.stderr)
 
 
-# Get directories from command line arguments.
-args = parser.parse_args()
 
-paths = []
-for path in args.path:
-    paths.append( os.path.expanduser(path) )
-
-
-## Prepare multithreading.
 pool = multiprocessing.Pool(processes=args.threads)
-m = multiprocessing.Manager()
-l = m.Lock()
-
 
 for path in paths:
     if not os.path.isdir(path):
@@ -81,8 +79,7 @@ for path in paths:
         continue
 
     fits_files = [f for f in os.listdir(path) if f.endswith('.fits')]
+    file_paths = [os.path.join(path,f) for f in fits_files]
 
-    process_partial = partial(process_file,l,args.of,path)
-    
-    pool.map(process_partial,fits_files)
+    pool.map(process_file,file_paths)
 
