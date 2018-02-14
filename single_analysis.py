@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
+import os; os.environ['OMP_NUM_THREADS']='1'
 from analysis_tools_cython import *
 import sys
-import os
 import matplotlib.pyplot as plt
 
 if len(sys.argv) > 1:

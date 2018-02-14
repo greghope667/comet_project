@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-from analysis_tools_cython import *
-from functools import partial
-#from scipy.stats import skew
-import multiprocessing
+# First have to disable inbuilt multithreading for performance reasons.
 import os
+os.environ['OMP_NUM_THREADS']='1'
+from analysis_tools_cython import *
+import multiprocessing
 import sys
 import traceback
 import argparse
