@@ -1,0 +1,11 @@
+# Build files
+analysis_tools_cython.c*
+build
+
+# Data folders
+light_curves
+results
+
+# Temp vim files
+*.swp
+
