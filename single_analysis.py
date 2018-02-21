@@ -3,15 +3,15 @@ import os; os.environ['OMP_NUM_THREADS']='1'
 from analysis_tools_cython import *
 import sys
 import matplotlib.pyplot as plt
+import argparse
 
-if len(sys.argv) > 1:
-    fits_file = sys.argv[1]
-    table=import_lightcurve(fits_file)
-else:
-    print("Missing argument.")
-    print("Usage:",sys.argv[0],"[FILENAME]")
-    sys.exit()
+parser = argparse.ArgumentParser(description='Analyse target lightcurve.')
+parser.add_argument(help='Target lightcurve file',nargs=1,dest='fits_file')
+parser.add_argument('-n', help='No graphical output', action='store_true')
 
+args = parser.parse_args()
+
+table=import_lightcurve(args.fits_file[0])
 
 timestep = calculate_timestep(table)
 t,flux,real = clean_data(table)
@@ -55,19 +55,22 @@ if n-3*m >= 0 and n+3*m < N:
     x2 = flux_ls[n-3*m:n+3*m]
     background = (sum(x2[:1*m]) + sum(x2[5*m:]))/(2*m)
     x2 -= background
-    params1 = single_gaussian_curve_fit(t2,-x2)
-    y2 = -gauss(t2,*params1)
-    params2 = skewed_gaussian_curve_fit(t2,-x2)
-    z2 = -skewed_gauss(t2,*params2)
-    params3 = comet_curve_fit(t2,-x2)
-    w2 = -comet_curve(t2,*params3)
+    paramsgauss = single_gaussian_curve_fit(t2,-x2)
+    y2 = -gauss(t2,*paramsgauss)
+    paramscomet = comet_curve_fit(t2,-x2)
+    w2 = -comet_curve(t2,*paramscomet)
 
-    scores = [score_fit(x2,fit) for fit in [y2, z2, w2]]
+    scores = [score_fit(x2,fit) for fit in [y2, w2]]
     print(scores)
-    print("Asym score:",round(scores[0]/scores[2],4))
+    print("Asym score:",round(scores[0]/scores[1],4))
 
 # Classify events
 print(classify(m,n,real))
+
+# Skip plotting if no graphical output set
+if args.n:
+    sys.exit()
+
 
 #plt.xkcd()
 fig1,axarr = plt.subplots(4)
@@ -86,7 +89,7 @@ ax2 = fig2.add_subplot(111)
 #y = np.maximum(bimodal(bins,*params),10)
 #ax2.plot(bins,y)
 try:
-    ax2.plot(t2,x2,t2,y2,t2,z2,t2,w2)
+    ax2.plot(t2,x2,t2,y2,t2,w2)
 except:
     pass
 
