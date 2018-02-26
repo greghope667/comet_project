@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os; os.environ['OMP_NUM_THREADS']='1'
 from analysis_tools_cython import *
+from functools import reduce
 import sys
 import matplotlib.pyplot as plt
 import argparse
@@ -14,7 +15,7 @@ args = parser.parse_args()
 table=import_lightcurve(args.fits_file[0])
 
 timestep = calculate_timestep(table)
-t,flux,real = clean_data(table)
+t,flux,quality,real = clean_data(table)
 N = len(t)
 ones = np.ones(N)
 
@@ -53,6 +54,7 @@ print("Transit depth =",round(flux[trans_start:trans_end].mean(),6))
 if n-3*m >= 0 and n+3*m < N:
     t2 = t[n-3*m:n+3*m]
     x2 = flux_ls[n-3*m:n+3*m]
+    q2 = quality[n-3*m:n+3*m]
     background = (sum(x2[:1*m]) + sum(x2[5*m:]))/(2*m)
     x2 -= background
     paramsgauss = single_gaussian_curve_fit(t2,-x2)
@@ -63,6 +65,9 @@ if n-3*m >= 0 and n+3*m < N:
     scores = [score_fit(x2,fit) for fit in [y2, w2]]
     print(scores)
     print("Asym score:",round(scores[0]/scores[1],4))
+
+    qual_flags = reduce(lambda a,b: a|b, q2)
+    print("Quality flags:",qual_flags)
 
 # Classify events
 print(classify(m,n,real))

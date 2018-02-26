@@ -18,7 +18,7 @@ def import_lightcurve(file_path):
         return
 
     scidata = hdulist[1].data
-    table = Table(scidata)['TIME','PDCSAP_FLUX']
+    table = Table(scidata)['TIME','PDCSAP_FLUX','SAP_QUALITY']
 
     # Delete rows containing NaN values.
     nan_rows = [ i for i in range(len(table)) if
@@ -51,30 +51,33 @@ def clean_data(table):
     between points. Returns three numpy arrays, time, flux, real.
     real is 0 if data point interpolated, 1 otherwise."""
 
-    t = []
-    x = []
-    r = []
+    time = []
+    flux = []
+    quality = []
+    real = []
     timestep = calculate_timestep(table)
 
     for row in table:
-        ti, xi = row
+        ti, fi, qi = row
 
-        if len(t) > 0:
-            steps = int(round( (ti - t[-1])/timestep ))
+        if len(time) > 0:
+            steps = int(round( (ti - time[-1])/timestep ))
 
             if steps > 1:
-                fluxstep = (xi - x[-1])/steps
+                fluxstep = (fi - flux[-1])/steps
 
                 for _ in range(steps-1):
-                    t.append(timestep + t[-1])
-                    x.append(fluxstep + x[-1])
-                    r.append(0)
+                    time.append(timestep + time[-1])
+                    flux.append(fluxstep + flux[-1])
+                    quality.append(0)
+                    real.append(0)
 
-        t.append(ti)
-        x.append(xi)
-        r.append(1)
+        time.append(ti)
+        flux.append(fi)
+        quality.append(qi)
+        real.append(1)
 
-    return np.array(t),np.array(x),np.array(r)
+    return [np.array(x) for x in [time,flux,quality,real]]
 
 
 def normalise_flux(flux):
