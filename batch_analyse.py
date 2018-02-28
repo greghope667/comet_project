@@ -34,7 +34,7 @@ lock = m.Lock()
 def process_file(f_path):
     try:
         table = import_lightcurve(f_path)
-        t,flux,real = clean_data(table)
+        t,flux,quality,real = clean_data(table)
         flux = normalise_flux(flux)
         lombscargle_filter(t,flux,real,0.05)
         flux = flux*real
@@ -49,14 +49,18 @@ def process_file(f_path):
         Tm_end = Tm_start + m
         Tm_depth = flux[Tm_start:Tm_end].mean()
 
-        s = classify(m,n,real)
-        asym = calc_asymmetry(m,n,t,flux)
+        asym, width1, width2 = calc_shape(m,n,t,flux)
+        s = classify(m,n,real,asym)
 
         f = os.path.basename(f_path)
 
-        result_str = f+' '+\
-            ' '.join([str(round(a,8)) for a in
-                [Tm, Tm/Ts, asym,Tm_time,Tm_duration,Tm_depth]])+' '+s
+        result_str =\
+                f+' '+\
+                ' '.join([str(round(a,8)) for a in
+                    [Tm, Tm/Ts, Tm_time,
+                    asym,width1,width2,
+                    Tm_duration,Tm_depth]])+\
+                ' '+s
 
         lock.acquire()
         with open(args.of,'a') as out_file:

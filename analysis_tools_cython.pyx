@@ -284,9 +284,9 @@ def interpret(params):
     return height_ratio,separation
 
 
-def classify(m,n,real):
+def classify(m,n,real,asym):
     N = len(real)
-    if n-2*m < 0 or n+2*m > N:
+    if asym == -2:
         return "end"
     elif m < 3:
         return "point"
@@ -296,14 +296,16 @@ def classify(m,n,real):
         return "maybeTransit"
 
 
-def calc_asymmetry(m,n,time,flux):
+def calc_shape(m,n,time,flux):
     """Fit both symmetric and comet-like transit profiles and compare fit.
-
-    Returns ratio of (errors squared)
+    Returns:
+    (1) Asymmetry: ratio of (errors squared)
     Possible errors and return values:
     -1 : Divide by zero as comet profile is exact fit
     -2 : Too close to end of light curve to fit profile
     -3 : Unable to fit model (e.g. timeout)
+
+    (2,3) Widths of comet curve fit segments.
     """
     if n-3*m >= 0 and n+3*m < len(time):
         t = time[n-3*m:n+3*m]
@@ -315,16 +317,16 @@ def calc_asymmetry(m,n,time,flux):
             params1 = single_gaussian_curve_fit(t,-x)
             params2 = comet_curve_fit(t,-x)
         except:
-            return -3
+            return -3,-3,-3
 
         fit1 = -gauss(t,*params1)
         fit2 = -comet_curve(t,*params2)
 
         scores = [score_fit(x,fit) for fit in [fit1,fit2]]
         if scores[1] > 0:
-            return scores[0]/scores[1]
+            return scores[0]/scores[1], params2[2], params2[3]
         else:
-            return -1
+            return -1,-1,-1
     else:
-        return -2
+        return -2,-2,-2
 

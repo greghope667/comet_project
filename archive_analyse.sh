@@ -109,7 +109,7 @@ for file in "$@"; do
         fi
     fi
 
-    file_count=$( find $workdir -name '*.fits' | wc -l )
+    file_count=$( find $workdir -maxdepth 1 -name '*.fits' | wc -l )
     if $processarchives; then
         echo "$file_count files extracted."
     else

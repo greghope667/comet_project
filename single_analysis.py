@@ -70,7 +70,8 @@ if n-3*m >= 0 and n+3*m < N:
     print("Quality flags:",qual_flags)
 
 # Classify events
-print(classify(m,n,real))
+asym,_,_=calc_shape(m,n,t,flux)
+print(classify(m,n,real,asym))
 
 # Skip plotting if no graphical output set
 if args.n:
