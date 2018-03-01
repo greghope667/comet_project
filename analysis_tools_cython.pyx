@@ -8,7 +8,7 @@ import math
 import sys,os
 
 
-def import_lightcurve(file_path):
+def import_lightcurve(file_path, drop_bad_points=False):
     """Returns (N by 2) table, columns are (time, flux)."""
 
     try:
@@ -19,6 +19,10 @@ def import_lightcurve(file_path):
 
     scidata = hdulist[1].data
     table = Table(scidata)['TIME','PDCSAP_FLUX','SAP_QUALITY']
+
+    if drop_bad_points:
+        bad_points = [i for i in range(len(table)) if table[i][2]>0]
+        table.remove_rows(bad_points)
 
     # Delete rows containing NaN values.
     nan_rows = [ i for i in range(len(table)) if
