@@ -13,6 +13,7 @@ Parameters:
     -k  Keeps temporary files on completion.
         (do not use with multiple archives)
     -o  File to output results to (default ./output.txt).
+    -q  Keep only points with SAP_QUALITY=0.
     -s  Skip disk space check for extraction.
     -t  Number of threads to use (default is 1).
     -w  Working directory to store temporary extracted files."
@@ -35,8 +36,9 @@ keepfiles=false
 splitout=false
 checkspace=true
 processarchives=true
+q_flag=""
 
-while getopts ':hadkst:o:w:' opt; do
+while getopts ':hadksqt:o:w:' opt; do
     case $opt in
         h)
             usage
@@ -62,6 +64,9 @@ while getopts ':hadkst:o:w:' opt; do
         d)
             processarchives=false
             keepfiles=true
+            ;;
+        q)
+            q_flag='-q'
             ;;
         *)
             usage
@@ -120,7 +125,7 @@ for file in "$@"; do
         rm $workdir/out.txt
     fi
 
-    ./batch_analyse.py -t $threads -o $workdir/out.txt $workdir &
+    ./batch_analyse.py $q_flag -t $threads -o $workdir/out.txt $workdir &
 
     start_time=$SECONDS
 

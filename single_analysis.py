@@ -9,7 +9,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Analyse target lightcurve.')
 parser.add_argument(help='Target lightcurve file',nargs=1,dest='fits_file')
 parser.add_argument('-n', help='No graphical output', action='store_true')
-parser.add_argument('-q', help='Keep only points with SAP_QUALITY=1',action='store_true')
+parser.add_argument('-q', help='Keep only points with SAP_QUALITY=0',action='store_true')
 
 args = parser.parse_args()
 

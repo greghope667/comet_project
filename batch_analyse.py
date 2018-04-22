@@ -18,6 +18,7 @@ parser.add_argument('-t', help='number of threads to use',default=1,
 
 parser.add_argument('-o',default='output.txt',dest='of',help='output file')
 
+parser.add_argument('-q', help='Keep only points with SAP_QUALITY=1',action='store_true')
 
 # Get directories from command line arguments.
 args = parser.parse_args()
@@ -33,7 +34,7 @@ lock = m.Lock()
 
 def process_file(f_path):
     try:
-        table = import_lightcurve(f_path)
+        table = import_lightcurve(f_path, args.q)
         t,flux,quality,real = clean_data(table)
         flux = normalise_flux(flux)
         lombscargle_filter(t,flux,real,0.05)

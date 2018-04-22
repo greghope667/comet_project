@@ -70,11 +70,17 @@ def clean_data(table):
             if steps > 1:
                 fluxstep = (fi - flux[-1])/steps
 
+                # For small gaps, pretend interpolated data is real.
+                if steps > 3:
+                    set_real=0
+                else:
+                    set_real=1
+
                 for _ in range(steps-1):
                     time.append(timestep + time[-1])
                     flux.append(fluxstep + flux[-1])
                     quality.append(0)
-                    real.append(0)
+                    real.append(set_real)
 
         time.append(ti)
         flux.append(fi)
